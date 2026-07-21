@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuoteFollow — Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; background: #1e293b; border-bottom: 1px solid #334155; }
+    .nav h1 { font-size: 20px; color: #38bdf8; }
+    .nav .tabs { display: flex; gap: 8px; }
+    .nav .tab { padding: 8px 16px; border-radius: 6px; cursor: pointer; background: transparent; color: #94a3b8; border: none; font-size: 14px; }
+    .nav .tab.active { background: #334155; color: #e2e8f0; }
+    .nav .tab:hover { background: #334155; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 32px; }
+
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+    .stat { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; }
+    .stat .label { font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat .value { font-size: 32px; font-weight: 700; margin-top: 4px; }
+    .stat .value.green { color: #4ade80; }
+    .stat .value.blue { color: #38bdf8; }
+    .stat .value.yellow { color: #fbbf24; }
+    .stat .value.purple { color: #a78bfa; }
+
+    .panel { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+    .panel h2 { font-size: 16px; margin-bottom: 16px; color: #f1f5f9; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 12px; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #334155; }
+    td { padding: 12px; border-bottom: 1px solid #1e293b; font-size: 14px; }
+    tr:hover td { background: #1e293b; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+    .badge.new { background: #1e3a5f; color: #38bdf8; }
+    .badge.contacted { background: #1e3a2f; color: #4ade80; }
+    .badge.pending { background: #3b2f1e; color: #fbbf24; }
+    .badge.closed { background: #2f1e3b; color: #a78bfa; }
+    .badge.sent { background: #1e3a2f; color: #4ade80; }
+    .badge.draft { background: #334155; color: #94a3b8; }
+
+    .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; }
+    .btn.primary { background: #38bdf8; color: #0f172a; }
+    .btn.primary:hover { background: #7dd3fc; }
+    .btn.secondary { background: #334155; color: #e2e8f0; }
+    .btn.secondary:hover { background: #475569; }
+    .btn.danger { background: #ef4444; color: white; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; color: #64748b; margin-bottom: 4px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid #334155;
+      border-radius: 6px; color: #e2e8f0; font-size: 14px;
+    }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #38bdf8; }
+
+    .flex { display: flex; gap: 16px; align-items: center; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #1e293b; border-radius: 12px; padding: 32px; width: 500px; max-height: 80vh; overflow-y: auto; border: 1px solid #334155; }
+    .modal h3 { margin-bottom: 20px; }
+
+    .empty { text-align: center; padding: 48px; color: #64748b; }
+    .empty p { margin-top: 8px; font-size: 14px; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    @media (max-width: 768px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .nav { flex-direction: column; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <h1>QuoteFollow</h1>
+    <div class="tabs">
+      <button class="tab active" onclick="showSection('dashboard')">Dashboard</button>
+      <button class="tab" onclick="showSection('leads')">Leads</button>
+      <button class="tab" onclick="showSection('clients')">Clients</button>
+      <button class="tab" onclick="showSection('quotes')">Quotes</button>
+      <button class="tab" onclick="showSection('campaign')">Campaign</button>
+      <button class="tab" onclick="showSection('revenue')">Revenue</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Dashboard -->
+    <div id="dashboard" class="section active">
+      <div class="stats">
+        <div class="stat"><div class="label">Total Leads</div><div class="value blue" id="stat-leads">0</div></div>
+        <div class="stat"><div class="label">Active Clients</div><div class="value green" id="stat-clients">0</div></div>
+        <div class="stat"><div class="label">Quotes Tracked</div><div class="value yellow" id="stat-quotes">0</div></div>
+        <div class="stat"><div class="label">Revenue</div><div class="value green" id="stat-revenue">$0</div></div>
+      </div>
+      <div class="panel">
+        <div class="flex-between">
+          <h2>Recent Activity</h2>
+          <button class="btn secondary" onclick="refreshStats()">Refresh</button>
+        </div>
+        <div id="activity-list" class="empty"><p>Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- Leads -->
+    <div id="leads" class="section">
+      <div class="panel">
+        <div class="flex-between">
+          <h2>Leads</h2>
+          <div class="flex">
+            <button class="btn primary" onclick="showModal('add-lead')">+ Add Lead</button>
+            <button class="btn secondary" onclick="showModal('scrape-leads')">Scrape Leads</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Business</th><th>Trade</th><th>City</th><th>Email</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="leads-table"></tbody>
+        </table>
+        <div id="leads-empty" class="empty"><p>No leads yet. Add one or scrape from Google.</p></div>
+      </div>
+    </div>
+
+    <!-- Clients -->
+    <div id="clients" class="section">
+      <div class="panel">
+        <div class="flex-between">
+          <h2>Clients</h2>
+          <button class="btn primary" onclick="showModal('add-client')">+ Add Client</button>
+        </div>
+        <table>
+          <thead><tr><th>Business</th><th>Contact</th><th>Trade</th><th>Plan</th><th>Monthly Fee</th><th>Status</th></tr></thead>
+          <tbody id="clients-table"></tbody>
+        </table>
+        <div id="clients-empty" class="empty"><p>No clients yet. Convert your leads!</p></div>
+      </div>
+    </div>
+
+    <!-- Quotes -->
+    <div id="quotes" class="section">
+      <div class="panel">
+        <div class="flex-between">
+          <h2>Quotes</h2>
+          <button class="btn primary" onclick="showModal('add-quote')">+ Add Quote</button>
+        </div>
+        <table>
+          <thead><tr><th>Client</th><th>Customer</th><th>Job</th><th>Amount</th><th>Date</th><th>Status</th><th>Follow-ups</th></tr></thead>
+          <tbody id="quotes-table"></tbody>
+        </table>
+        <div id="quotes-empty" class="empty"><p>No quotes tracked yet.</p></div>
+      </div>
+    </div>
+
+    <!-- Campaign -->
+    <div id="campaign" class="section">
+      <div class="panel">
+        <h2>Cold Email Campaign</h2>
+        <p style="color: #94a3b8; margin-bottom: 16px;">Send personalized cold emails to leads pitching the QuoteFollow service.</p>
+        <div class="flex" style="margin-bottom: 24px;">
+          <select id="campaign-template" style="padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0;">
+            <option value="cold_intro">Cold Intro (Loss Aversion)</option>
+            <option value="cold_with_stat">Cold with Statistics</option>
+            <option value="cold_case_study">Cold Case Study</option>
+          </select>
+          <button class="btn primary" onclick="sendCampaign()">Send Batch (20)</button>
+          <button class="btn secondary" onclick="previewEmail()">Preview Email</button>
+        </div>
+        <div id="email-preview" style="display:none; background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid #334155;"></div>
+      </div>
+      <div class="panel">
+        <h2>Email History</h2>
+        <table>
+          <thead><tr><th>Lead</th><th>Subject</th><th>Status</th><th>Sent</th></tr></thead>
+          <tbody id="email-history"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Revenue -->
+    <div id="revenue" class="section">
+      <div class="stats">
+        <div class="stat"><div class="label">Total Revenue</div><div class="value green" id="rev-total">$0</div></div>
+        <div class="stat"><div class="label">This Month</div><div class="value blue" id="rev-monthly">$0</div></div>
+        <div class="stat"><div class="label">Avg per Client</div><div class="value yellow" id="rev-avg">$0</div></div>
+        <div class="stat"><div class="label">Pipeline</div><div class="value purple" id="rev-pipeline">$0</div></div>
+      </div>
+      <div class="panel">
+        <h2>Revenue by Type</h2>
+        <table>
+          <thead><tr><th>Type</th><th>Count</th><th>Total</th></tr></thead>
+          <tbody id="revenue-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div id="modal-overlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal" id="modal-content"></div>
+  </div>
+
+  <script>
+    let currentSection = 'dashboard';
+
+    function showSection(name) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(name).classList.add('active');
+      event.target.classList.add('active');
+      currentSection = name;
+      loadSection(name);
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch('/api' + path, {
+        method: opts.method || 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: opts.body ? JSON.stringify(opts.body) : undefined,
+      });
+      return res.json();
+    }
+
+    async function refreshStats() {
+      const stats = await api('/stats');
+      document.getElementById('stat-leads').textContent = stats.leads;
+      document.getElementById('stat-clients').textContent = stats.activeClients;
+      document.getElementById('stat-quotes').textContent = stats.totalQuotes;
+      document.getElementById('stat-revenue').textContent = '$' + stats.totalRevenue.toLocaleString();
+
+      const list = document.getElementById('activity-list');
+      list.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:center;">
+          <div><div style="font-size:24px;color:#38bdf8">${stats.contacted}</div><div style="font-size:12px;color:#64748b">Emails Sent</div></div>
+          <div><div style="font-size:24px;color:#4ade80">${stats.emailsSent}</div><div style="font-size:12px;color:#64748b">Cold Emails</div></div>
+          <div><div style="font-size:24px;color:#fbbf24">${stats.followupsSent}</div><div style="font-size:12px;color:#64748b">Follow-ups Sent</div></div>
+          <div><div style="font-size:24px;color:#a78bfa">${stats.closedQuotes}</div><div style="font-size:12px;color:#64748b">Quotes Closed</div></div>
+        </div>
+      `;
+    }
+
+    async function loadSection(name) {
+      if (name === 'leads') loadLeads();
+      else if (name === 'clients') loadClients();
+      else if (name === 'quotes') loadQuotes();
+      else if (name === 'campaign') loadCampaign();
+      else if (name === 'revenue') loadRevenue();
+      else if (name === 'dashboard') refreshStats();
+    }
+
+    async function loadLeads() {
+      const leads = await api('/leads');
+      const tbody = document.getElementById('leads-table');
+      const empty = document.getElementById('leads-empty');
+      if (leads.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      tbody.innerHTML = leads.map(l => `
+        <tr>
+          <td><strong>${l.business_name}</strong></td>
+          <td>${l.trade || '-'}</td>
+          <td>${l.city || '-'}</td>
+          <td>${l.email || '<span style="color:#64748b">no email</span>'}</td>
+          <td>${l.phone || '-'}</td>
+          <td><span class="badge ${l.status}">${l.status}</span></td>
+          <td>${l.email ? `<button class="btn secondary" style="padding:4px 12px;font-size:12px" onclick="sendToLead(${l.id})">Send Email</button>` : ''}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadClients() {
+      const clients = await api('/clients');
+      const tbody = document.getElementById('clients-table');
+      const empty = document.getElementById('clients-empty');
+      if (clients.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      tbody.innerHTML = clients.map(c => `
+        <tr>
+          <td><strong>${c.business_name}</strong></td>
+          <td>${c.contact_name || '-'}</td>
+          <td>${c.trade || '-'}</td>
+          <td><span class="badge ${c.plan === 'growth' ? 'closed' : 'new'}">${c.plan}</span></td>
+          <td>$${c.monthly_fee}/mo</td>
+          <td><span class="badge ${c.status}">${c.status}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadQuotes() {
+      const quotes = await api('/quotes');
+      const tbody = document.getElementById('quotes-table');
+      const empty = document.getElementById('quotes-empty');
+      if (quotes.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      tbody.innerHTML = quotes.map(q => `
+        <tr>
+          <td>${q.client_name}</td>
+          <td>${q.customer_name}</td>
+          <td>${q.job_description || '-'}</td>
+          <td>$${q.quote_amount || '-'}</td>
+          <td>${q.quote_date || '-'}</td>
+          <td><span class="badge ${q.status}">${q.status}</span></td>
+          <td>${q.followups_sent || 0} sent / ${q.followups_pending || 0} pending</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadCampaign() {
+      const emails = await api('/leads?status=contacted');
+      const tbody = document.getElementById('email-history');
+      tbody.innerHTML = emails.slice(0, 20).map(e => `
+        <tr>
+          <td>${e.business_name}</td>
+          <td>Cold outreach</td>
+          <td><span class="badge contacted">sent</span></td>
+          <td>${new Date(e.created_at).toLocaleDateString()}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" style="text-align:center;color:#64748b">No emails sent yet</td></tr>';
+    }
+
+    async function loadRevenue() {
+      const rev = await api('/revenue');
+      document.getElementById('rev-total').textContent = '$' + rev.total.toLocaleString();
+      document.getElementById('rev-monthly').textContent = '$' + rev.monthly.toLocaleString();
+      document.getElementById('rev-avg').textContent = rev.byType.length > 0 ? '$' + Math.round(rev.total / rev.byType.reduce((a,b)=>a+b.count,0)) : '$0';
+      document.getElementById('rev-pipeline').textContent = '$' + (rev.monthly * 3).toLocaleString();
+
+      const tbody = document.getElementById('revenue-table');
+      tbody.innerHTML = rev.byType.map(r => `
+        <tr><td>${r.type}</td><td>${r.count}</td><td>$${r.total.toLocaleString()}</td></tr>
+      `).join('') || '<tr><td colspan="3" style="text-align:center;color:#64748b">No revenue yet</td></tr>';
+    }
+
+    function showModal(type) {
+      const modal = document.getElementById('modal-content');
+      const overlay = document.getElementById('modal-overlay');
+
+      const forms = {
+        'add-lead': `
+          <h3>Add Lead</h3>
+          <div class="form-group"><label>Business Name</label><input id="m-biz" placeholder="Ace Plumbing"></div>
+          <div class="form-group"><label>Contact Name</label><input id="m-contact" placeholder="John Smith"></div>
+          <div class="form-group"><label>Email</label><input id="m-email" type="email" placeholder="john@aceplumbing.com"></div>
+          <div class="form-group"><label>Phone</label><input id="m-phone" placeholder="(512) 555-1234"></div>
+          <div class="form-group"><label>Website</label><input id="m-website" placeholder="https://aceplumbing.com"></div>
+          <div class="form-group"><label>City</label><input id="m-city" placeholder="Austin"></div>
+          <div class="form-group"><label>State</label><input id="m-state" placeholder="TX"></div>
+          <div class="form-group"><label>Trade</label><select id="m-trade"><option>plumbing</option><option>hvac</option><option>roofing</option><option>landscaping</option><option>electrical</option><option>general</option></select></div>
+          <button class="btn primary" onclick="submitLead()">Add Lead</button>
+        `,
+        'scrape-leads': `
+          <h3>Scrape Leads from Google</h3>
+          <p style="color:#94a3b8;margin-bottom:16px;">Find local contractors by trade and city.</p>
+          <div class="form-group"><label>Trade</label><select id="m-scrape-trade"><option value="plumbing">plumbing</option><option value="hvac">hvac</option><option value="roofing">roofing</option><option value="landscaping">landscaping</option><option value="electrical">electrical</option></select></div>
+          <div class="form-group"><label>City</label><input id="m-scrape-city" placeholder="Austin TX" value="Austin TX"></div>
+          <button class="btn primary" onclick="scrapeLeads()">Start Scraping</button>
+        `,
+        'add-client': `
+          <h3>Add Client</h3>
+          <div class="form-group"><label>Business Name</label><input id="m-cbiz" placeholder="Ace Plumbing"></div>
+          <div class="form-group"><label>Contact Name</label><input id="m-ccontact" placeholder="John Smith"></div>
+          <div class="form-group"><label>Email</label><input id="m-cemail" type="email"></div>
+          <div class="form-group"><label>Phone</label><input id="m-cphone"></div>
+          <div class="form-group"><label>Trade</label><select id="m-ctrade"><option>plumbing</option><option>hvac</option><option>roofing</option><option>landscaping</option><option>electrical</option></select></div>
+          <div class="form-group"><label>Plan</label><select id="m-cplan"><option value="starter">Starter ($149/mo)</option><option value="growth">Growth ($249/mo)</option></select></div>
+          <button class="btn primary" onclick="submitClient()">Add Client</button>
+        `,
+        'add-quote': `
+          <h3>Add Quote</h3>
+          <div class="form-group"><label>Client</label><select id="m-qclient"></select></div>
+          <div class="form-group"><label>Customer Name</label><input id="m-qcust" placeholder="Jane Doe"></div>
+          <div class="form-group"><label>Customer Email</label><input id="m-qemail" type="email"></div>
+          <div class="form-group"><label>Customer Phone</label><input id="m-qphone"></div>
+          <div class="form-group"><label>Job Description</label><input id="m-qjob" placeholder="Bathroom remodel"></div>
+          <div class="form-group"><label>Quote Amount ($)</label><input id="m-qamount" type="number" placeholder="4500"></div>
+          <div class="form-group"><label>Quote Date</label><input id="m-qdate" type="date"></div>
+          <button class="btn primary" onclick="submitQuote()">Add Quote & Schedule Follow-ups</button>
+        `,
+      };
+
+      modal.innerHTML = forms[type];
+      overlay.classList.add('active');
+
+      if (type === 'add-quote') loadClientSelect();
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('active');
+    }
+
+    async function loadClientSelect() {
+      const clients = await api('/clients');
+      const select = document.getElementById('m-qclient');
+      select.innerHTML = clients.map(c => `<option value="${c.id}">${c.business_name}</option>`).join('');
+    }
+
+    async function submitLead() {
+      await api('/leads', { method: 'POST', body: {
+        business_name: document.getElementById('m-biz').value,
+        contact_name: document.getElementById('m-contact').value,
+        email: document.getElementById('m-email').value,
+        phone: document.getElementById('m-phone').value,
+        website: document.getElementById('m-website').value,
+        city: document.getElementById('m-city').value,
+        state: document.getElementById('m-state').value,
+        trade: document.getElementById('m-trade').value,
+      }});
+      closeModal(); loadLeads();
+    }
+
+    async function submitClient() {
+      const plan = document.getElementById('m-cplan').value;
+      await api('/clients', { method: 'POST', body: {
+        business_name: document.getElementById('m-cbiz').value,
+        contact_name: document.getElementById('m-ccontact').value,
+        email: document.getElementById('m-cemail').value,
+        phone: document.getElementById('m-cphone').value,
+        trade: document.getElementById('m-ctrade').value,
+        plan,
+        monthly_fee: plan === 'growth' ? 249 : 149,
+      }});
+      closeModal(); loadClients();
+    }
+
+    async function submitQuote() {
+      await api('/quotes', { method: 'POST', body: {
+        client_id: document.getElementById('m-qclient').value,
+        customer_name: document.getElementById('m-qcust').value,
+        customer_email: document.getElementById('m-qemail').value,
+        customer_phone: document.getElementById('m-qphone').value,
+        job_description: document.getElementById('m-qjob').value,
+        quote_amount: parseFloat(document.getElementById('m-qamount').value),
+        quote_date: document.getElementById('m-qdate').value,
+      }});
+      closeModal(); loadQuotes();
+    }
+
+    async function scrapeLeads() {
+      const trade = document.getElementById('m-scrape-trade').value;
+      const city = document.getElementById('m-scrape-city').value;
+      const btn = event.target;
+      btn.textContent = 'Scraping...';
+      btn.disabled = true;
+      const result = await api('/leads/scrape', { method: 'POST', body: { trade, city }});
+      alert(`Scraped ${result.scraped} leads!`);
+      closeModal(); loadLeads();
+    }
+
+    async function sendCampaign() {
+      const template = document.getElementById('campaign-template').value;
+      const btn = event.target;
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+      const result = await api('/campaign/send', { method: 'POST', body: { template, limit: 20 }});
+      alert(`Campaign complete! Check results.`);
+      btn.textContent = 'Send Batch (20)';
+      btn.disabled = false;
+    }
+
+    async function previewEmail() {
+      const template = document.getElementById('campaign-template').value;
+      const result = await api('/campaign/preview/' + template);
+      const div = document.getElementById('email-preview');
+      div.style.display = 'block';
+      div.innerHTML = `<div style="margin-bottom:8px;color:#38bdf8;font-weight:600">${result.subject}</div><pre style="white-space:pre-wrap;font-size:13px;color:#cbd5e1">${result.body}</pre>`;
+    }
+
+    async function sendToLead(id) {
+      if (!confirm('Send cold email to this lead?')) return;
+      await api('/campaign/send', { method: 'POST', body: { template: 'cold_intro', limit: 1 }});
+      alert('Email sent!');
+      loadLeads();
+    }
+
+    refreshStats();
+  </script>
+</body>
+</html>

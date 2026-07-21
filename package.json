@@ -1,0 +1,21 @@
+{
+  "name": "quotefollow",
+  "version": "1.0.0",
+  "description": "Done-for-you quote follow-up service for contractors",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "scrape": "node lead-scraper.js",
+    "campaign": "node campaign.js",
+    "followups": "node followup-engine.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.4.3",
+    "nodemailer": "^6.9.8",
+    "node-fetch": "^2.7.0",
+    "cheerio": "^1.0.0-rc.12",
+    "cron": "^3.1.6",
+    "dotenv": "^16.3.1"
+  }
+}

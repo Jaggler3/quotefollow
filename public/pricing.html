@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuoteFollow — Get Started</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+    .hero { text-align: center; padding: 80px 20px 60px; }
+    .hero h1 { font-size: 48px; color: #38bdf8; margin-bottom: 16px; }
+    .hero p { font-size: 20px; color: #94a3b8; max-width: 600px; margin: 0 auto; }
+    .hero .tagline { font-size: 16px; color: #64748b; margin-top: 8px; }
+
+    .pricing { display: flex; justify-content: center; gap: 32px; padding: 40px 20px; max-width: 900px; margin: 0 auto; }
+    .plan { background: #1e293b; border-radius: 16px; padding: 40px; width: 280px; border: 1px solid #334155; text-align: center; }
+    .plan.featured { border-color: #38bdf8; position: relative; }
+    .plan.featured::before { content: 'MOST POPULAR'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #38bdf8; color: #0f172a; padding: 4px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+    .plan h3 { font-size: 20px; margin-bottom: 8px; }
+    .plan .price { font-size: 40px; font-weight: 700; color: #4ade80; margin: 16px 0; }
+    .plan .price span { font-size: 16px; color: #64748b; font-weight: 400; }
+    .plan ul { list-style: none; text-align: left; margin: 24px 0; }
+    .plan ul li { padding: 8px 0; color: #94a3b8; font-size: 14px; }
+    .plan ul li::before { content: '✓ '; color: #4ade80; }
+    .plan .btn { display: block; width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; }
+    .plan .btn-primary { background: #38bdf8; color: #0f172a; }
+    .plan .btn-outline { background: transparent; border: 2px solid #334155; color: #e2e8f0; }
+
+    .proof { text-align: center; padding: 60px 20px; }
+    .proof h2 { font-size: 28px; margin-bottom: 40px; }
+    .stats { display: flex; justify-content: center; gap: 60px; }
+    .stat { text-align: center; }
+    .stat .num { font-size: 48px; font-weight: 700; color: #38bdf8; }
+    .stat .label { color: #64748b; margin-top: 4px; }
+
+    .how { max-width: 800px; margin: 0 auto; padding: 60px 20px; }
+    .how h2 { text-align: center; font-size: 28px; margin-bottom: 40px; }
+    .steps { display: flex; flex-direction: column; gap: 32px; }
+    .step { display: flex; gap: 20px; align-items: flex-start; }
+    .step-num { width: 48px; height: 48px; background: #38bdf8; color: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0; }
+    .step-text h3 { font-size: 18px; margin-bottom: 4px; }
+    .step-text p { color: #94a3b8; font-size: 14px; }
+
+    .cta { text-align: center; padding: 80px 20px; background: #1e293b; }
+    .cta h2 { font-size: 32px; margin-bottom: 16px; }
+    .cta p { color: #94a3b8; margin-bottom: 32px; }
+    .cta .btn { padding: 16px 40px; font-size: 18px; border-radius: 8px; background: #38bdf8; color: #0f172a; border: none; cursor: pointer; font-weight: 600; }
+
+    footer { text-align: center; padding: 40px; color: #475569; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>QuoteFollow</h1>
+    <p>Never lose a job to silence again.</p>
+    <div class="tagline">Done-for-you quote follow-up for contractors</div>
+  </div>
+
+  <div class="proof">
+    <h2>The Problem</h2>
+    <div class="stats">
+      <div class="stat"><div class="num">73%</div><div class="label">of contractors follow up 0-1 times</div></div>
+      <div class="stat"><div class="num">$2,400</div><div class="label">average monthly revenue lost</div></div>
+      <div class="stat"><div class="num">5-7</div><div class="label">touchpoints needed to close</div></div>
+    </div>
+  </div>
+
+  <div class="how">
+    <h2>How It Works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <h3>Send Us Your Quotes</h3>
+          <p>Forward quote emails, use our dashboard, or text us the details. We need: customer name, email, job description, and amount.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <h3>We Handle Follow-ups</h3>
+          <p>4 professional follow-ups over 18 days. Day 2: friendly check-in. Day 5: address concerns. Day 10: add urgency. Day 18: final touchpoint.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <h3>Close More Jobs</h3>
+          <p>Watch your close rate climb. Get weekly reports showing every follow-up sent, every email opened, every reply received.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pricing">
+    <div class="plan">
+      <h3>Starter</h3>
+      <div class="price">$149<span>/mo</span></div>
+      <ul>
+        <li>Up to 30 quotes/month</li>
+        <li>4-touch email sequence</li>
+        <li>Weekly status report</li>
+        <li>Email support</li>
+      </ul>
+      <button class="btn btn-outline" onclick="alert('Contact us at hello@quotefollow.com')">Get Started</button>
+    </div>
+    <div class="plan featured">
+      <h3>Growth</h3>
+      <div class="price">$249<span>/mo</span></div>
+      <ul>
+        <li>Up to 80 quotes/month</li>
+        <li>Email + SMS follow-ups</li>
+        <li>Priority timing</li>
+        <li>Monthly strategy call</li>
+        <li>Phone support</li>
+      </ul>
+      <button class="btn btn-primary" onclick="alert('Contact us at hello@quotefollow.com')">Get Started</button>
+    </div>
+    <div class="plan">
+      <h3>Enterprise</h3>
+      <div class="price">$499<span>/mo</span></div>
+      <ul>
+        <li>Unlimited quotes</li>
+        <li>Custom sequences</li>
+        <li>Dedicated account manager</li>
+        <li>API access</li>
+        <li>White-label option</li>
+      </ul>
+      <button class="btn btn-outline" onclick="alert('Contact us at hello@quotefollow.com')">Contact Sales</button>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h2>Stop Leaving Money on the Table</h2>
+    <p>Join contractors who increased their close rate by 89% with QuoteFollow.</p>
+    <button class="btn" onclick="alert('Contact us at hello@quotefollow.com')">Start Your Free Trial</button>
+  </div>
+
+  <footer>
+    <p>QuoteFollow &copy; 2025 — Never lose a job to silence again.</p>
+  </footer>
+</body>
+</html>
