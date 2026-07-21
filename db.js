@@ -19,7 +19,8 @@ db.exec(`
     source TEXT,
     status TEXT DEFAULT 'new',
     notes TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
   CREATE TABLE IF NOT EXISTS clients (
@@ -54,16 +55,15 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS followups (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    quote_id INTEGER NOT NULL,
-    sequence_step INTEGER NOT NULL,
-    scheduled_date DATE NOT NULL,
+    lead_id INTEGER,
+    quote_id INTEGER,
+    type TEXT NOT NULL,
+    sequence_step INTEGER,
+    send_at DATETIME NOT NULL,
     sent_at DATETIME,
-    email_subject TEXT,
-    email_body TEXT,
     status TEXT DEFAULT 'scheduled',
-    opened_at DATETIME,
-    replied_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (lead_id) REFERENCES leads(id),
     FOREIGN KEY (quote_id) REFERENCES quotes(id)
   );
 
@@ -89,6 +89,16 @@ db.exec(`
     stripe_payment_id TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (client_id) REFERENCES clients(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS email_replies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_id INTEGER NOT NULL,
+    gmail_message_id TEXT UNIQUE,
+    subject TEXT,
+    body_preview TEXT,
+    received_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (lead_id) REFERENCES leads(id)
   );
 `);
 

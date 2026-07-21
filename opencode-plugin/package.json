@@ -1,0 +1,26 @@
+{
+  "name": "quotefollow",
+  "version": "1.0.0",
+  "description": "QuoteFollow business automation commands",
+  "main": "index.js",
+  "opencode": {
+    "commands": [
+      {
+        "name": "qf-status",
+        "description": "Show QuoteFollow business stats",
+        "script": "node ../scheduler.js stats"
+      },
+      {
+        "name": "qf-run",
+        "description": "Run one scheduler tick (check replies + send follow-ups)",
+        "script": "node ../scheduler.js once"
+      },
+      {
+        "name": "qf-send",
+        "description": "Send cold emails to next N leads",
+        "usage": "/qf-send [template] [limit]",
+        "script": "node ../campaign.js send"
+      }
+    ]
+  }
+}

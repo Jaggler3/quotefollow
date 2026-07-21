@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuoteFollow — Never Lose a Job to Silence</title>
+  <meta name="description" content="Done-for-you quote follow-up service for contractors. We follow up on every quote so you never lose a job to silence.">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; }
+    .nav h1 { font-size: 24px; color: #38bdf8; }
+    .nav a { color: #94a3b8; text-decoration: none; margin-left: 24px; font-size: 14px; }
+    .nav a:hover { color: #e2e8f0; }
+
+    .hero { text-align: center; padding: 100px 20px 80px; }
+    .hero h1 { font-size: 56px; font-weight: 800; margin-bottom: 20px; line-height: 1.1; }
+    .hero h1 span { color: #38bdf8; }
+    .hero p { font-size: 20px; color: #94a3b8; max-width: 600px; margin: 0 auto 40px; }
+    .hero .btn { display: inline-block; padding: 16px 40px; background: #38bdf8; color: #0f172a; border-radius: 8px; font-size: 18px; font-weight: 600; text-decoration: none; }
+    .hero .btn:hover { background: #7dd3fc; }
+
+    .proof { background: #1e293b; padding: 60px 20px; }
+    .stats { display: flex; justify-content: center; gap: 80px; max-width: 800px; margin: 0 auto; }
+    .stat { text-align: center; }
+    .stat .num { font-size: 48px; font-weight: 700; color: #38bdf8; }
+    .stat .label { color: #64748b; margin-top: 8px; font-size: 14px; }
+
+    .how { max-width: 800px; margin: 0 auto; padding: 80px 20px; }
+    .how h2 { text-align: center; font-size: 32px; margin-bottom: 48px; }
+    .steps { display: flex; flex-direction: column; gap: 40px; }
+    .step { display: flex; gap: 24px; align-items: flex-start; }
+    .step-num { width: 56px; height: 56px; background: #38bdf8; color: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; flex-shrink: 0; }
+    .step-text h3 { font-size: 20px; margin-bottom: 8px; }
+    .step-text p { color: #94a3b8; line-height: 1.6; }
+
+    .pricing { background: #1e293b; padding: 80px 20px; }
+    .pricing h2 { text-align: center; font-size: 32px; margin-bottom: 48px; }
+    .plans { display: flex; justify-content: center; gap: 32px; max-width: 900px; margin: 0 auto; flex-wrap: wrap; }
+    .plan { background: #0f172a; border-radius: 16px; padding: 40px; width: 280px; border: 1px solid #334155; text-align: center; }
+    .plan.featured { border-color: #38bdf8; position: relative; }
+    .plan.featured::before { content: 'MOST POPULAR'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #38bdf8; color: #0f172a; padding: 4px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+    .plan h3 { font-size: 20px; margin-bottom: 8px; }
+    .plan .price { font-size: 40px; font-weight: 700; color: #4ade80; margin: 16px 0; }
+    .plan .price span { font-size: 16px; color: #64748b; font-weight: 400; }
+    .plan ul { list-style: none; text-align: left; margin: 24px 0; }
+    .plan ul li { padding: 8px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid #1e293b; }
+    .plan ul li::before { content: '✓ '; color: #4ade80; font-weight: 700; }
+
+    .cta { text-align: center; padding: 80px 20px; }
+    .cta h2 { font-size: 36px; margin-bottom: 16px; }
+    .cta p { color: #94a3b8; margin-bottom: 32px; font-size: 18px; }
+
+    footer { text-align: center; padding: 40px; color: #475569; font-size: 13px; border-top: 1px solid #1e293b; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 36px; }
+      .stats { flex-direction: column; gap: 32px; }
+      .plans { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <h1>QuoteFollow</h1>
+    <div>
+      <a href="#how">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="mailto:martin@quotefollow.com">Contact</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>Never Lose a Job<br>to <span>Silence</span> Again</h1>
+    <p>We follow up on every quote you send. Professional, persistent, and never pushy. You focus on the work — we close the deals.</p>
+    <a href="mailto:martin@quotefollow.com?subject=QuoteFollow%20-%20Get%20Started" class="btn">Start Your Free Trial</a>
+  </div>
+
+  <div class="proof">
+    <div class="stats">
+      <div class="stat"><div class="num">73%</div><div class="label">of contractors follow up<br>0-1 times on quotes</div></div>
+      <div class="stat"><div class="num">$2,400</div><div class="label">average monthly revenue<br>lost to silence</div></div>
+      <div class="stat"><div class="num">5-7</div><div class="label">touchpoints needed<br>to close a deal</div></div>
+    </div>
+  </div>
+
+  <div class="how" id="how">
+    <h2>How It Works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <h3>Send Us Your Quotes</h3>
+          <p>Forward quote emails, use our dashboard, or text us the details. We need: customer name, email, job description, and amount. Takes 30 seconds per quote.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <h3>We Handle Follow-ups</h3>
+          <p>4 professional follow-ups over 18 days. Day 2: friendly check-in. Day 5: address concerns. Day 10: add urgency. Day 18: final touchpoint. All personalized to the specific job.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <h3>Close More Jobs</h3>
+          <p>Watch your close rate climb. Get weekly reports showing every follow-up sent, every email opened, every reply received. Most clients see results in the first month.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pricing" id="pricing">
+    <h2>Simple, Transparent Pricing</h2>
+    <div class="plans">
+      <div class="plan">
+        <h3>Starter</h3>
+        <div class="price">$149<span>/mo</span></div>
+        <ul>
+          <li>Up to 30 quotes/month</li>
+          <li>4-touch email sequence</li>
+          <li>Weekly status report</li>
+          <li>Email support</li>
+        </ul>
+        <a href="https://buy.stripe.com/5kQ28q2OE9Xn16k6AF4sE00" style="display:block;padding:14px;background:#334155;color:#e2e8f0;border-radius:8px;text-decoration:none;font-weight:600;margin-top:16px;text-align:center;">Get Started</a>
+      </div>
+      <div class="plan featured">
+        <h3>Growth</h3>
+        <div class="price">$249<span>/mo</span></div>
+        <ul>
+          <li>Up to 80 quotes/month</li>
+          <li>Email + SMS follow-ups</li>
+          <li>Priority timing</li>
+          <li>Monthly strategy call</li>
+          <li>Phone support</li>
+        </ul>
+        <a href="https://buy.stripe.com/7sY14m2OEd9z16k7EJ4sE01" style="display:block;padding:14px;background:#38bdf8;color:#0f172a;border-radius:8px;text-decoration:none;font-weight:600;margin-top:16px;text-align:center;">Get Started</a>
+      </div>
+      <div class="plan">
+        <h3>Enterprise</h3>
+        <div class="price">$499<span>/mo</span></div>
+        <ul>
+          <li>Unlimited quotes</li>
+          <li>Custom sequences</li>
+          <li>Dedicated account manager</li>
+          <li>API access</li>
+          <li>White-label option</li>
+        </ul>
+        <a href="https://buy.stripe.com/8x29AS9d23yZ02gcZ34sE02" style="display:block;padding:14px;background:#334155;color:#e2e8f0;border-radius:8px;text-decoration:none;font-weight:600;margin-top:16px;text-align:center;">Contact Sales</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h2>Stop Leaving Money on the Table</h2>
+    <p>Join contractors who increased their close rate by 89% with QuoteFollow.</p>
+    <a href="mailto:martin@quotefollow.com?subject=QuoteFollow%20-%20Get%20Started" class="btn" style="display:inline-block;padding:16px 40px;background:#38bdf8;color:#0f172a;border-radius:8px;font-size:18px;font-weight:600;text-decoration:none;">Start Your Free Trial</a>
+  </div>
+
+  <footer>
+    <p>QuoteFollow &copy; 2025 &mdash; Never lose a job to silence again. | <a href="mailto:martin@quotefollow.com" style="color:#64748b">martin@quotefollow.com</a></p>
+  </footer>
+</body>
+</html>

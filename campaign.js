@@ -1,6 +1,19 @@
 const nodemailer = require('nodemailer');
 const db = require('./db');
 
+function createTransport() {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: 'martin.protostar@gmail.com',
+      clientId: process.env.GMAIL_CLIENT_ID,
+      clientSecret: process.env.GMAIL_CLIENT_SECRET,
+      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+    },
+  });
+}
+
 const EMAIL_TEMPLATES = {
   cold_intro: {
     subject: 'You sent 47 quotes last month — how many did you follow up on twice?',
@@ -102,16 +115,6 @@ function personalizeTemplate(template, data) {
   return { subject, body };
 }
 
-function createTransport() {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
-}
-
 async function sendColdEmail(leadId, templateName = 'cold_intro') {
   const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(leadId);
   if (!lead) throw new Error(`Lead ${leadId} not found`);
@@ -130,7 +133,7 @@ async function sendColdEmail(leadId, templateName = 'cold_intro') {
   });
 
   if (!lead.email) {
-    console.log(`  No email for ${lead.email}, saving draft`);
+    console.log(`  No email for ${lead.business_name}, saving draft`);
     db.prepare(`
       INSERT INTO cold_emails (lead_id, email_subject, email_body, status)
       VALUES (?, ?, ?, 'draft')
@@ -138,11 +141,11 @@ async function sendColdEmail(leadId, templateName = 'cold_intro') {
     return { status: 'draft', subject, body };
   }
 
-  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+  if (process.env.GMAIL_CLIENT_ID) {
     const transport = createTransport();
     try {
       await transport.sendMail({
-        from: `"Martin @ QuoteFollow" <${process.env.GMAIL_USER}>`,
+        from: '"Martin @ QuoteFollow" <martin.protostar@gmail.com>',
         to: lead.email,
         subject,
         text: body,
@@ -166,7 +169,7 @@ async function sendColdEmail(leadId, templateName = 'cold_intro') {
       return { status: 'failed', error: err.message };
     }
   } else {
-    console.log(`  Gmail not configured, saving draft`);
+    console.log(`  Gmail not configured, saving draft for ${lead.business_name}`);
     db.prepare(`
       INSERT INTO cold_emails (lead_id, email_subject, email_body, status)
       VALUES (?, ?, ?, 'draft')
