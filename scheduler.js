@@ -3,15 +3,21 @@
 const db = require('./db');
 const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
+const { processDueFollowups } = require('./followup-engine');
 
 // ─── Config ───────────────────────────────────────────────────────
 const CHECK_INTERVAL_MS = 15 * 60 * 1000; // 15 min
+const DAILY_CAP = 50; // max emails/day across cold + follow-ups (shared Gmail protection)
 const FOLLOWUP_DELAYS = {
   followup_1: 2,   // days after initial
   followup_2: 5,
   followup_3: 10,
   followup_4: 18,
 };
+
+function sendsToday() {
+  return db.prepare("SELECT COUNT(*) as c FROM cold_emails WHERE status = 'sent' AND date(sent_at) = date('now')").get().c;
+}
 
 // ─── Gmail OAuth2 Transport ──────────────────────────────────────
 function createTransport() {
@@ -185,6 +191,13 @@ async function sendFollowups() {
   const transport = createTransport();
   const now = new Date();
 
+  // Enforce daily cap (cold emails + follow-ups share the budget)
+  const budget = Math.max(0, DAILY_CAP - sendsToday());
+  if (budget <= 0) {
+    console.log(`[Scheduler] Daily send cap reached (${DAILY_CAP}/day) — skipping follow-ups`);
+    return;
+  }
+
   // Find follow-ups that are due
   const due = db.prepare(`
     SELECT f.*, l.business_name, l.contact_name, l.email, l.trade, l.city
@@ -192,8 +205,8 @@ async function sendFollowups() {
     JOIN leads l ON f.lead_id = l.id
     WHERE f.status = 'scheduled'
     AND datetime(f.send_at) <= datetime('now')
-    LIMIT 10
-  `).all();
+    LIMIT ?
+  `).all(Math.min(10, budget));
 
   console.log(`[Scheduler] ${due.length} follow-ups due`);
 
@@ -270,28 +283,32 @@ function printStats() {
     contacted: db.prepare("SELECT COUNT(*) as c FROM leads WHERE status = 'contacted'").get().c,
     replied: db.prepare("SELECT COUNT(*) as c FROM leads WHERE status = 'replied'").get().c,
     emailsSent: db.prepare("SELECT COUNT(*) as c FROM cold_emails WHERE status = 'sent'").get().c,
+    sentToday: sendsToday(),
     followupsDue: db.prepare("SELECT COUNT(*) as c FROM followups WHERE status = 'scheduled' AND datetime(send_at) <= datetime('now')").get().c,
     followupsScheduled: db.prepare("SELECT COUNT(*) as c FROM followups WHERE status = 'scheduled'").get().c,
   };
 
   console.log('\n┌─────────────── QuoteFollow Stats ───────────────┐');
   console.log(`│ Leads:       ${String(stats.totalLeads).padStart(4)} total, ${String(stats.contacted).padStart(4)} contacted, ${String(stats.replied).padStart(3)} replied │`);
-  console.log(`│ Emails sent: ${String(stats.emailsSent).padStart(4)}                                  │`);
+  console.log(`│ Emails sent: ${String(stats.emailsSent).padStart(4)}  (today: ${String(stats.sentToday).padStart(2)}/${DAILY_CAP})              │`);
   console.log(`│ Follow-ups:  ${String(stats.followupsDue).padStart(4)} due, ${String(stats.followupsScheduled).padStart(4)} scheduled         │`);
   console.log('└──────────────────────────────────────────────────┘\n');
 }
 
-// ─── Main Loop ────────────────────────────────────────────────────
+  // ─── Main Loop ────────────────────────────────────────────────────
 async function tick() {
   try {
     scheduleFollowups();
     await checkReplies();
     await sendFollowups();
+    // Process any client quote follow‑ups that are due
+    await processDueFollowups();
     printStats();
   } catch (err) {
     console.error('[Scheduler] Tick error:', err);
   }
 }
+
 
 async function main() {
   console.log('[Scheduler] QuoteFollow autonomous scheduler started');
