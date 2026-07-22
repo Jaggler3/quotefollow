@@ -88,8 +88,11 @@ function createTransport() {
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
+      type: 'OAuth2',
+      user: 'martin.protostar@gmail.com',
+      clientId: process.env.GMAIL_CLIENT_ID,
+      clientSecret: process.env.GMAIL_CLIENT_SECRET,
+      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
     },
   });
 }
@@ -105,8 +108,8 @@ function scheduleFollowups(quoteId) {
   if (!quote) throw new Error(`Quote ${quoteId} not found`);
 
   const insertFollowup = db.prepare(`
-    INSERT INTO followups (quote_id, sequence_step, scheduled_date, email_subject, email_body, status)
-    VALUES (?, ?, date('now', '+' || ? || ' days'), ?, ?, 'scheduled')
+    INSERT INTO followups (quote_id, type, sequence_step, send_at, status)
+    VALUES (?, 'quote_followup', ?, datetime('now', '+' || ? || ' days'), 'scheduled')
   `);
 
   const expiryDate = new Date();
@@ -128,9 +131,7 @@ function scheduleFollowups(quoteId) {
     insertFollowup.run(
       quoteId,
       step.step,
-      step.delayDays,
-      subject,
-      body
+      step.delayDays
     );
   }
 
@@ -139,18 +140,19 @@ function scheduleFollowups(quoteId) {
 
 async function processDueFollowups() {
   const due = db.prepare(`
-    SELECT f.*, q.customer_email, q.customer_name, q.client_id
+    SELECT f.*, q.customer_email, q.customer_name, q.job_description, q.quote_amount, q.client_id
     FROM followups f
     JOIN quotes q ON f.quote_id = q.id
     WHERE f.status = 'scheduled'
-    AND f.scheduled_date <= date('now')
+    AND f.send_at <= datetime('now')
+    AND f.type = 'quote_followup'
   `).all();
 
   console.log(`Processing ${due.length} due follow-ups...`);
 
   const results = [];
 
-  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+  if (process.env.GMAIL_CLIENT_ID) {
     const transport = createTransport();
 
     for (const followup of due) {
@@ -160,13 +162,35 @@ async function processDueFollowups() {
       }
 
       const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(followup.client_id);
+      
+      // Find the matching template
+      const template = FOLLOWUP_SEQUENCE.find(s => s.step === followup.sequence_step);
+      if (!template) {
+        console.log(`  No template for step ${followup.sequence_step}, skipping`);
+        continue;
+      }
+
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+
+      const templateData = {
+        customer_name: followup.customer_name,
+        job_description: followup.job_description || 'project',
+        quote_amount: followup.quote_amount ? `$${followup.quote_amount}` : 'your project',
+        client_name: client ? client.business_name : 'QuoteFollow',
+        client_trade: client ? client.trade : '',
+        warranty: '1-year',
+        expiry_date: expiryDate.toLocaleDateString(),
+      };
+
+      const { subject, body } = personalizeTemplate(template, templateData);
 
       try {
         await transport.sendMail({
-          from: `"${client.business_name}" <${process.env.GMAIL_USER}>`,
+          from: `"${client ? client.business_name : 'QuoteFollow'}" <martin.protostar@gmail.com>`,
           to: followup.customer_email,
-          subject: followup.email_subject,
-          text: followup.email_body,
+          subject,
+          text: body,
         });
 
         db.prepare(`

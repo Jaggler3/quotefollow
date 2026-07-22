@@ -4,8 +4,87 @@ const db = require('./db');
 const { scheduleFollowups, processDueFollowups, getClientDashboard, getFollowupStats } = require('./followup-engine');
 const { sendColdEmail, sendBatch, EMAIL_TEMPLATES } = require('./campaign');
 const { scrapeLeads, scrapeAll, TRADES, CITIES } = require('./lead-scraper');
+const Stripe = require('stripe');
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
+
+// Webhook route MUST be before express.json() — Stripe needs raw body for signature verification
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send('Webhook Error: ' + err.message);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const email = session.customer_email || session.customer_details?.email;
+    const name = session.customer_details?.name;
+    const amount = session.amount_total;
+    const plan = amount >= 49900 ? 'enterprise' : amount >= 24900 ? 'growth' : 'starter';
+    const monthlyFee = amount / 100;
+
+    console.log(`[Webhook] New signup: ${name} (${email}) - $${monthlyFee}/mo ${plan}`);
+
+    // Create client record
+    const result = db.prepare(`
+      INSERT INTO clients (business_name, contact_name, email, plan, monthly_fee, status)
+      VALUES (?, ?, ?, ?, ?, 'active')
+    `).run(name || email, name, email, plan, monthlyFee);
+
+    // Record revenue
+    db.prepare(`
+      INSERT INTO revenue (client_id, amount, type, description, stripe_payment_id)
+      VALUES (?, ?, 'subscription', ?, ?)
+    `).run(result.lastInsertRowid, monthlyFee, `${plan} plan - Month 1`, session.id);
+
+    // Send welcome email
+    try {
+      const nodemailer = require('nodemailer');
+      const transport = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          type: 'OAuth2',
+          user: 'martin.protostar@gmail.com',
+          clientId: process.env.GMAIL_CLIENT_ID,
+          clientSecret: process.env.GMAIL_CLIENT_SECRET,
+          refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+        },
+      });
+
+      await transport.sendMail({
+        from: '"Martin @ QuoteFollow" <martin.protostar@gmail.com>',
+        to: email,
+        subject: 'Welcome to QuoteFollow! Let\'s get you set up',
+        text: `Hi ${name || 'there'},
+
+Welcome to QuoteFollow! You're now on the ${plan} plan ($${monthlyFee}/mo).
+
+Here's what happens next:
+1. I'll reach out within 24 hours to learn about your business
+2. We'll set up your follow-up sequences
+3. You'll start getting reports on quote follow-up activity
+
+If you have any questions, just reply to this email.
+
+Best,
+Martin
+QuoteFollow`,
+      });
+    } catch (err) {
+      console.error('[Webhook] Welcome email failed:', err.message);
+    }
+  }
+
+  res.json({ received: true });
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -183,9 +262,9 @@ app.get('/api/stats', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 3456;
+const PORT = process.env.PORT || 3457;
 app.listen(PORT, () => {
   console.log(`\nQuoteFollow running at http://localhost:${PORT}`);
-  console.log('Dashboard: http://localhost:3456');
-  console.log('API: http://localhost:3456/api/stats\n');
+  console.log(`Dashboard: http://localhost:${PORT}`);
+  console.log(`API: http://localhost:${PORT}/api/stats\n`);
 });

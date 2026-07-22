@@ -1,6 +1,15 @@
 const nodemailer = require('nodemailer');
 const db = require('./db');
 
+// ─── Daily send cap (shared Gmail account protection) ───────────────
+const DAILY_CAP = 50;
+function sendsToday() {
+  return db.prepare("SELECT COUNT(*) as c FROM cold_emails WHERE status = 'sent' AND date(sent_at) = date('now')").get().c;
+}
+function sendBudget() {
+  return Math.max(0, DAILY_CAP - sendsToday());
+}
+
 function createTransport() {
   return nodemailer.createTransport({
     service: 'gmail',
@@ -142,6 +151,10 @@ async function sendColdEmail(leadId, templateName = 'cold_intro') {
   }
 
   if (process.env.GMAIL_CLIENT_ID) {
+    if (sendBudget() <= 0) {
+      console.log(`  Daily send cap reached (${DAILY_CAP}/day) — skipping ${lead.email}`);
+      return { status: 'capped' };
+    }
     const transport = createTransport();
     try {
       await transport.sendMail({
@@ -179,14 +192,20 @@ async function sendColdEmail(leadId, templateName = 'cold_intro') {
 }
 
 async function sendBatch(templateName = 'cold_intro', limit = 20) {
+  const budget = sendBudget();
+  if (budget <= 0) {
+    console.log(`Daily send cap reached (${DAILY_CAP}/day). Try again tomorrow.`);
+    return [];
+  }
+  const effectiveLimit = Math.min(limit, budget);
   const leads = db.prepare(`
     SELECT * FROM leads
     WHERE email IS NOT NULL
     AND status = 'new'
     LIMIT ?
-  `).all(limit);
+  `).all(effectiveLimit);
 
-  console.log(`Sending to ${leads.length} leads...`);
+  console.log(`Sending to ${leads.length} leads... (daily budget: ${budget} remaining)`);
 
   const results = [];
   for (const lead of leads) {
@@ -228,4 +247,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { sendColdEmail, sendBatch, personalizeTemplate, EMAIL_TEMPLATES };
+module.exports = { sendColdEmail, sendBatch, personalizeTemplate, EMAIL_TEMPLATES, sendsToday, sendBudget, DAILY_CAP };

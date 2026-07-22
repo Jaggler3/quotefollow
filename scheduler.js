@@ -2,6 +2,7 @@
 
 const db = require('./db');
 const nodemailer = require('nodemailer');
+const { sendBatch } = require('./campaign');
 const { google } = require('googleapis');
 const { processDueFollowups } = require('./followup-engine');
 
@@ -125,7 +126,7 @@ async function checkReplies() {
   try {
     const res = await gmail.users.messages.list({
       userId: 'me',
-      q: 'is:unread subject:"Re:" from:(@gmail.com OR @yahoo.com OR @hotmail.com OR @outlook.com)',
+      q: 'is:unread (subject:"Re: You sent 47 quotes" OR subject:"Re: is losing" OR subject:"Re: How a" OR subject:"Re: Quick question about" OR subject:"Re: Last thing" OR subject:"Re: Quick math" OR subject:"Re: Closing the loop")',
       maxResults: 20,
     });
 
