@@ -2,9 +2,10 @@
 
 const db = require('./db');
 const nodemailer = require('nodemailer');
-const { sendBatch } = require('./campaign');
 const { google } = require('googleapis');
+const { sendBatch } = require('./campaign');
 const { processDueFollowups } = require('./followup-engine');
+const { scrapeNewLeads } = require('./scrape-leads');
 
 // ─── Config ───────────────────────────────────────────────────────
 const CHECK_INTERVAL_MS = 15 * 60 * 1000; // 15 min
@@ -287,23 +288,45 @@ function printStats() {
     sentToday: sendsToday(),
     followupsDue: db.prepare("SELECT COUNT(*) as c FROM followups WHERE status = 'scheduled' AND datetime(send_at) <= datetime('now')").get().c,
     followupsScheduled: db.prepare("SELECT COUNT(*) as c FROM followups WHERE status = 'scheduled'").get().c,
+    newLeads: db.prepare("SELECT COUNT(*) as c FROM leads WHERE status = 'new'").get().c,
   };
 
   console.log('\n┌─────────────── QuoteFollow Stats ───────────────┐');
   console.log(`│ Leads:       ${String(stats.totalLeads).padStart(4)} total, ${String(stats.contacted).padStart(4)} contacted, ${String(stats.replied).padStart(3)} replied │`);
+  console.log(`│ New leads:   ${String(stats.newLeads).padStart(4)} waiting for first email                  │`);
   console.log(`│ Emails sent: ${String(stats.emailsSent).padStart(4)}  (today: ${String(stats.sentToday).padStart(2)}/${DAILY_CAP})              │`);
   console.log(`│ Follow-ups:  ${String(stats.followupsDue).padStart(4)} due, ${String(stats.followupsScheduled).padStart(4)} scheduled         │`);
   console.log('└──────────────────────────────────────────────────┘\n');
 }
 
-  // ─── Main Loop ────────────────────────────────────────────────────
+// ─── Daily lead scrape (once per day) ─────────────────────────────
+async function maybeScrapeLeads() {
+  const lastScrape = db.prepare("SELECT MAX(created_at) as last FROM leads WHERE source = 'scraped'").get().last;
+  const now = new Date();
+  const lastScrapeDate = lastScrape ? new Date(lastScrape) : new Date(0);
+  const hoursSinceLastScrape = (now - lastScrapeDate) / (1000 * 60 * 60);
+
+  if (hoursSinceLastScrape >= 24) {
+    console.log('[Scheduler] Running daily lead scrape...');
+    await scrapeNewLeads();
+  }
+}
+
+// ─── Main Loop ────────────────────────────────────────────────────
 async function tick() {
   try {
     scheduleFollowups();
     await checkReplies();
     await sendFollowups();
-    // Process any client quote follow‑ups that are due
     await processDueFollowups();
+    await maybeScrapeLeads();
+    // Send cold emails to new leads (5 per day, respecting daily cap)
+    const newLeadsCount = db.prepare("SELECT COUNT(*) as c FROM leads WHERE status = 'new' AND email IS NOT NULL").get().c;
+    const budget = Math.max(0, DAILY_CAP - sendsToday());
+    if (newLeadsCount > 0 && budget >= 5) {
+      console.log(`[Scheduler] Sending cold emails to ${Math.min(5, newLeadsCount)} new leads...`);
+      await sendBatch('cold_intro', 5);
+    }
     printStats();
   } catch (err) {
     console.error('[Scheduler] Tick error:', err);
